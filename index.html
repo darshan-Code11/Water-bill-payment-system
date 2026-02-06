@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BWSSB Bill Payment</title>
+
+  <!-- TAB LOGO (FAVICON) -->
+  <link rel="icon" type="image/png" href="2022-04-26-085840.153484CKAN-Organisation-Bangalore-Water-Supply-and-Sewerage--Board-Logo.png">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #749dd3;
+      padding-top: 170px;
+    }
+
+    /* Moving Banner */
+    .banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: white;
+      overflow: hidden;
+      z-index: 999;
+      padding: 10px 0;
+      border-bottom: 2px solid #ccc;
+    }
+
+    .banner-content {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      white-space: nowrap;
+      padding-left: 100%;
+      animation: moveBanner 15s linear infinite;
+    }
+
+    .banner-content img {
+      height: 90px;
+    }
+
+    .disclaimer {
+      font-size: 18px;
+      font-weight: bold;
+      color: darkblue;
+    }
+
+    @keyframes moveBanner {
+      0% { transform: translateX(0%); }
+      100% { transform: translateX(-100%); }
+    }
+
+    /* Main Box */
+    .box {
+      background: white;
+      padding: 25px;
+      width: 420px;
+      max-width: 90%;
+      border-radius: 10px;
+      box-shadow: 0px 0px 10px gray;
+      margin: auto;
+    }
+
+    h2 {
+      text-align: center;
+      color: #333;
+    }
+
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 10px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      border-radius: 5px;
+      border: 1px solid gray;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 15px;
+      padding: 10px;
+      background: green;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: darkgreen;
+    }
+
+    .result {
+      margin-top: 15px;
+      padding: 10px;
+      background: #eee;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+
+    .pay-section {
+      display: none;
+      margin-top: 15px;
+      padding: 10px;
+      background: #f0f8ff;
+      border-radius: 5px;
+    }
+
+    .success {
+      font-weight: bold;
+      color: green;
+      margin-top: 10px;
+      text-align: center;
+    }
+
+    .timer {
+      font-weight: bold;
+      color: red;
+      margin-top: 10px;
+      text-align: center;
+    }
+
+    .qr-box {
+      display: none;
+      text-align: center;
+      margin-top: 15px;
+    }
+
+    .qr-box img {
+      width: 180px;
+      height: 180px;
+      border: 2px solid black;
+      padding: 5px;
+      border-radius: 8px;
+    }
+
+    .mode-title {
+      font-weight: bold;
+      margin-top: 10px;
+      color: darkblue;
+    }
+
+    .print-btn {
+      display: none;
+      background: blue;
+      margin-top: 15px;
+    }
+
+    .print-btn:hover {
+      background: darkblue;
+    }
+
+    /* Hidden Logo for PDF Print */
+    .print-logo {
+      display: none;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .print-logo img {
+      height: 100px;
+    }
+
+    /* PRINT FORMAT */
+    @media print {
+      body {
+        background: white;
+        padding-top: 0;
+      }
+
+      .banner,
+      button,
+      select,
+      input,
+      label,
+      .pay-section,
+      #qrBox,
+      #timer,
+      #paymentStatus {
+        display: none !important;
+      }
+
+      .box {
+        width: 100%;
+        box-shadow: none;
+        border: none;
+      }
+
+      #result {
+        background: white;
+        font-size: 18px;
+        padding: 20px;
+        border: 2px solid black;
+        border-radius: 0;
+      }
+
+      .print-logo {
+        display: block;
+      }
+    }
+
+    /* MOBILE RESPONSIVE */
+    @media (max-width: 600px) {
+      body {
+        padding-top: 140px;
+      }
+
+      .banner-content img {
+        height: 70px;
+      }
+
+      .disclaimer {
+        font-size: 14px;
+      }
+
+      h2 {
+        font-size: 20px;
+      }
+
+      input, select, button {
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Moving Banner -->
+  <div class="banner">
+    <div class="banner-content">
+      <img src="2022-04-26-085840.153484CKAN-Organisation-Bangalore-Water-Supply-and-Sewerage--Board-Logo.png" alt="BWSSB Logo">
+      <div class="disclaimer">
+        Disclaimer: Charges Per Unit → Domestic ₹3.5/unit | Commercial ₹5.5/unit | Industrial ₹4.5/unit
+      </div>
+    </div>
+  </div>
+
+  <!-- Main UI -->
+  <div class="box">
+    <h2>Water Bill Payment</h2>
+
+    <label>Reference Number:</label>
+    <input type="text" id="refNo" placeholder="Enter 8 digit reference number" maxlength="8" oninput="onlyDigits(this)">
+
+    <label>Connection Type:</label>
+    <select id="type">
+      <option value="D">Domestic</option>
+      <option value="C">Commercial</option>
+      <option value="I">Industrial</option>
+    </select>
+
+    <label>Units Consumed:</label>
+    <input type="number" id="units" placeholder="Enter units">
+
+    <button onclick="calculateBill()">Calculate Bill</button>
+
+    <!-- Print Logo (only for PDF) -->
+    <div class="print-logo">
+      <img src="2022-04-26-085840.153484CKAN-Organisation-Bangalore-Water-Supply-and-Sewerage--Board-Logo.png" alt="BWSSB Logo">
+    </div>
+
+    <div class="result" id="result">
+      Result will appear here...
+    </div>
+
+    <!-- Payment Section -->
+    <div class="pay-section" id="paySection">
+
+      <div class="mode-title">Select Payment Mode:</div>
+      <select id="payMode" onchange="showOptions()">
+        <option value="">-- Select Mode --</option>
+        <option value="UPI">UPI</option>
+        <option value="CreditCard">Credit Card</option>
+        <option value="DebitCard">Debit Card</option>
+      </select>
+
+      <!-- UPI Apps -->
+      <div id="upiAppsBox" style="display:none;">
+        <label>Select UPI App:</label>
+        <select id="upiApp">
+          <option value="Paytm">Paytm</option>
+          <option value="Google Pay">Google Pay</option>
+          <option value="PhonePe">PhonePe</option>
+          <option value="BHIM">BHIM</option>
+          <option value="Amazon Pay">Amazon Pay</option>
+        </select>
+      </div>
+
+      <!-- Credit Card -->
+      <div id="creditBox" style="display:none;">
+        <label>Enter Credit Card Number:</label>
+        <input type="text" placeholder="xxxx xxxx xxxx xxxx" id="creditCard">
+      </div>
+
+      <!-- Debit Card -->
+      <div id="debitBox" style="display:none;">
+        <label>Enter Debit Card Number:</label>
+        <input type="text" placeholder="xxxx xxxx xxxx xxxx" id="debitCard">
+      </div>
+
+      <button onclick="payBill()">Pay Now</button>
+
+      <!-- Fake QR -->
+      <div class="qr-box" id="qrBox">
+        <h3>Scan QR to Pay</h3>
+        <img src="Example-QR-code (1).webp" alt="QR Code">
+        <p><b>UPI ID:</b> bangaluruwatersupply@upi</p>
+      </div>
+
+      <div class="timer" id="timer"></div>
+      <div class="success" id="paymentStatus"></div>
+
+      <!-- Print Button -->
+      <button class="print-btn" id="printBtn" onclick="printReceipt()">Print Receipt (PDF)</button>
+    </div>
+  </div>
+
+  <script>
+    let totalBillAmount = 0;
+
+    function onlyDigits(input) {
+      input.value = input.value.replace(/[^0-9]/g, '');
+    }
+
+    function calculateBill() {
+      let refNo = document.getElementById("refNo").value;
+      let type = document.getElementById("type").value;
+      let units = parseInt(document.getElementById("units").value);
+
+      if (refNo === "" || refNo.length !== 8) {
+        alert("Reference Number must be exactly 8 digits!");
+        return;
+      }
+
+      if (isNaN(units) || units < 0) {
+        alert("Please enter valid units!");
+        return;
+      }
+
+      let typeName = "";
+      let chargePerUnit = 0;
+
+      switch (type) {
+        case "D":
+          chargePerUnit = 3.5;
+          totalBillAmount = units * 3.5;
+          typeName = "Domestic";
+          break;
+
+        case "C":
+          chargePerUnit = 5.5;
+          totalBillAmount = units * 5.5;
+          typeName = "Commercial";
+          break;
+
+        case "I":
+          chargePerUnit = 4.5;
+          totalBillAmount = units * 4.5;
+          typeName = "Industrial";
+          break;
+      }
+
+      document.getElementById("result").innerHTML = `
+        <h2 style="text-align:center;">BWSSB Bill Receipt</h2>
+        <hr>
+        <p><b>Date:</b> ${new Date().toLocaleDateString()}</p>
+        <p><b>Reference Number:</b> ${refNo}</p>
+        <p><b>Connection Type:</b> ${typeName}</p>
+        <p><b>Units Consumed:</b> ${units}</p>
+        <p><b>Charges Per Unit:</b> ₹${chargePerUnit}</p>
+        <hr>
+        <h3 style="color:green;">Total Bill Amount: ₹${totalBillAmount}</h3>
+        <p><b>Status:</b> <span id="billStatus" style="color:red;">Pending Payment ❌</span></p>
+      `;
+
+      document.getElementById("paySection").style.display = "block";
+      document.getElementById("paymentStatus").innerHTML = "";
+      document.getElementById("timer").innerHTML = "";
+      document.getElementById("qrBox").style.display = "none";
+      document.getElementById("printBtn").style.display = "none";
+    }
+
+    function showOptions() {
+      let mode = document.getElementById("payMode").value;
+
+      document.getElementById("upiAppsBox").style.display = "none";
+      document.getElementById("creditBox").style.display = "none";
+      document.getElementById("debitBox").style.display = "none";
+
+      if (mode === "UPI") document.getElementById("upiAppsBox").style.display = "block";
+      if (mode === "CreditCard") document.getElementById("creditBox").style.display = "block";
+      if (mode === "DebitCard") document.getElementById("debitBox").style.display = "block";
+    }
+
+    function payBill() {
+      let mode = document.getElementById("payMode").value;
+
+      if (mode === "") {
+        alert("Please select payment mode!");
+        return;
+      }
+
+      let method = "";
+
+      if (mode === "UPI") {
+        method = document.getElementById("upiApp").value;
+        document.getElementById("qrBox").style.display = "block";
+      } 
+      else if (mode === "CreditCard") {
+        if (document.getElementById("creditCard").value === "") {
+          alert("Enter Credit Card Number!");
+          return;
+        }
+        method = "Credit Card";
+        document.getElementById("qrBox").style.display = "none";
+      } 
+      else if (mode === "DebitCard") {
+        if (document.getElementById("debitCard").value === "") {
+          alert("Enter Debit Card Number!");
+          return;
+        }
+        method = "Debit Card";
+        document.getElementById("qrBox").style.display = "none";
+      }
+
+      document.getElementById("paymentStatus").innerHTML = "";
+      document.getElementById("printBtn").style.display = "none";
+
+      let timeLeft = 60;
+
+      document.getElementById("timer").innerHTML =
+        "Processing payment via " + method + " ... Time left: " + timeLeft + " sec";
+
+      let countdown = setInterval(() => {
+        timeLeft--;
+
+        document.getElementById("timer").innerHTML =
+          "Processing payment via " + method + " ... Time left: " + timeLeft + " sec";
+
+        if (timeLeft <= 0) {
+          clearInterval(countdown);
+
+          document.getElementById("timer").innerHTML = "";
+          document.getElementById("qrBox").style.display = "none";
+
+          document.getElementById("paymentStatus").innerHTML =
+            "✅ Payment Successful via " + method + "<br>🎉 Bill Paid Successfully!";
+
+          /* CHANGE STATUS AFTER 60 SEC */
+          document.getElementById("billStatus").innerHTML = "Bill Paid ✅";
+          document.getElementById("billStatus").style.color = "green";
+
+          document.getElementById("result").innerHTML += `
+            <hr>
+            <h3 style="color:blue;">Payment Status: PAID ✅</h3>
+          `;
+
+          document.getElementById("printBtn").style.display = "block";
+        }
+      }, 1000);
+    }
+
+    function printReceipt() {
+      window.print();
+    }
+  </script>
+
+</body>
+</html>
