@@ -1,4 +1,4 @@
-# 📌 README – BWSSB Electricity Bill Payment System (Demo Project)
+# 📌 README – BWSSB Electricity Bill Payment System (Demo_Project)
 
 ## 📖 Project Title
 
